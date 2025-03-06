@@ -3,8 +3,7 @@
 #include <util/delay.h>
 #include <stdint.h>
 
-uint8_t		pin_count[3] = {PD3, PD5, PD6};
-uint8_t		g_count = 0;
+uint8_t	g_seq_counter = 0;
 
 void	setup_led( void )
 {
@@ -21,13 +20,25 @@ void	define_timer_1Hz( void )
 	TIMSK1 |= (1 << OCIE1A);
 }
 
+void	print_sequence( void )
+{
+	const uint8_t		pin_count[3] = {PD3, PD6, PD5};
+	const uint8_t		print_seq[7] = {4, 2, 1, 6, 3, 5, 7};
+	
+	if (g_seq_counter >= 8)
+		g_seq_counter = 0;
+	for (uint8_t j = 0; j < 3; j++)
+	{
+		if (print_seq[g_seq_counter] & (1 << j))
+			PORTD |= (1 << pin_count[j]);
+	}
+	++g_seq_counter;
+}
+
 ISR(TIMER1_COMPA_vect)
 {
-	g_count++;
-	if (g_count >= 3)
-		g_count = 0;
 	PORTD &= ~(1 << PD3) & ~(1 << PD5) & ~(1 << PD6);
-	PORTD |= (1 << pin_count[g_count]);
+	print_sequence();
 }
 
 int		main( void )
