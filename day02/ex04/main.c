@@ -161,9 +161,7 @@ void	password( void )
 	g_counter = 0;
 	g_input_done = 0;
 	print_prompt_user();
-	uart_tx('O');
 	while (g_input_done == 0);
-
 	g_counter = 0;
 	g_input_done = 0;
 	print_prompt_pass();

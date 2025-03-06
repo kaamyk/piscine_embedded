@@ -29,7 +29,7 @@ void	uart_tx( char c )
 ISR(USART_RX_vect) // p50
 {
 	char	c = UDR0;
-	uart_tx(c);
+	// uart_tx(c);
 	if (c >= 'a' && c <= 'z')
 		c -= 'a' - 'A';
 	else if (c >= 'A' && c <= 'Z')
