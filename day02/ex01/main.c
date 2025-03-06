@@ -12,6 +12,11 @@ void	uart_init( void )
 	UCSR0C &= ~(1 << USBS0);
 	//	(not mandatory) Disable the parity
 	UCSR0B &= ~(3 << UPM00);
+
+	//	Calculate the Brr
+	const uint16_t ubrr = (F_CPU / (16 * UART_BAUDRATE));
+	UBRR0H = (uint8_t)(ubrr >> 8);
+	UBRR0L = (uint8_t)ubrr;
 }
 
 void	uart_tx( char c )
@@ -27,21 +32,29 @@ void	define_timer_1Hz( void )
 	TCCR1A |= (1 << COM1A0) | (1 << COM1A1);
 	TCCR1B |= (1 << WGM12) | (1 << CS12) | (1 << CS10);
 	TCNT1 = 0;
-	OCR1A = 15624;
+	OCR1A = 33249;
 	TIMSK1 |= (1 << OCIE1A);
+}
+
+void	uart_printstr( const char * str )
+{
+	while (*str)
+	{
+		uart_tx(*str);
+		str++;
+	}
 }
 
 ISR(TIMER1_COMPA_vect)
 {
-	uart_tx('Z');
+	const char	*str = "Hello World!";
+	uart_printstr(str);
+	uart_tx('\n');
+	uart_tx('\r');
 }
 
 int		main ( void )
 {
-	//	Calculate the Brr
-	const uint16_t ubrr = (F_CPU / (16 * UART_BAUDRATE));
-	UBRR0H = (uint8_t)(ubrr >> 8);
-	UBRR0L = (uint8_t)ubrr;
 	define_timer_1Hz();
 	//	Enable interuptions
 	sei();
