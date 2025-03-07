@@ -26,7 +26,7 @@ void	uart_tx( char c )
 	UDR0 = c;
 }
 
-void	define_timer_1Hz( void )
+void	define_timer_halfHz( void )
 {
 	// Timer1 => mode 4 (CTC), / 256, compare match 
 	TCCR1A |= (1 << COM1A0) | (1 << COM1A1);

@@ -25,20 +25,20 @@ void	print_sequence( void )
 	const uint8_t		pin_count[3] = {PD3, PD6, PD5};
 	const uint8_t		print_seq[7] = {4, 2, 1, 6, 3, 5, 7};
 	
-	if (g_seq_counter >= 8)
-		g_seq_counter = 0;
 	for (uint8_t j = 0; j < 3; j++)
 	{
 		if (print_seq[g_seq_counter] & (1 << j))
 			PORTD |= (1 << pin_count[j]);
 	}
-	++g_seq_counter;
 }
 
 ISR(TIMER1_COMPA_vect)
 {
 	PORTD &= ~(1 << PD3) & ~(1 << PD5) & ~(1 << PD6);
 	print_sequence();
+	++g_seq_counter;
+	if (g_seq_counter >= 7)
+		g_seq_counter ^= g_seq_counter;
 }
 
 int		main( void )
@@ -46,5 +46,6 @@ int		main( void )
 	setup_led();
 	define_timer_1Hz();	
 	sei();
+	g_seq_counter = 0;
 	while(1);
 }
