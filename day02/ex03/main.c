@@ -6,7 +6,7 @@ void	init_uart( void )
 	/*
 		Enable transmitter and recepter
 		Character size to 8 bit
-		Enable interuption
+		Enable interruption
 	*/
 	UCSR0B |= (1 << RXEN0) | (1 << TXEN0) | (3 << UCSZ00) | (1 << RXCIE0);
 	/*
