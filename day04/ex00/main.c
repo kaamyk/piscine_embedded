@@ -1,13 +1,10 @@
 #include "include.h"
 
+volatile uint8_t	state = 0;
+
 ISR(INT0_vect)
 {
-	EIMSK &= ~(1 << INT0);
-	_delay_ms(50);
-	
-	PORTB ^= (1 << PB0);
-	
-	EIMSK |= (1 << INT0);
+	state = 1;
 }
 
 int		main ( void )
@@ -17,10 +14,18 @@ int		main ( void )
 	//	Setup led
 	DDRB |= (1 << DDB0);
 	
-	//	Any logical change trigger interrupt
+	//	Falling edge triggers interrupt
 	EICRA |= (1 << ISC01);
 	//	Enable external interrupt INT0
 	EIMSK |= (1 << INT0);
 	sei();
-	while (1);
+	while (1)
+	{
+		if (state == 1)
+		{
+			PORTB ^= (1 << PB0);
+			_delay_ms(150);
+			state = 0;
+		}
+	}
 }

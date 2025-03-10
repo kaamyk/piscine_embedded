@@ -2,7 +2,6 @@ Atmel-7810-Automotive-Microcontrollers-ATmega328P_Datasheet.pdf
 avrdude-doc-6.1.pdf
 **/main.bin
 **/main.hex
-**/*.o
 **/.obj
 **/.vscode
 **/.zed

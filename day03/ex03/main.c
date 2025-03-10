@@ -13,11 +13,11 @@ void init_rgb(void)
 	DDRD |= (1 << DDD3) | (1 << DDD5) | (1 << DDD6);
 	//	Blue -> OC2B
 	//	Fast PWM TOP=0xFF | OC2B Set BOT, clear comp
-	TCCR2A |= (1 << WGM20) | (1 << WGM21) | (1 << COM2B1);
+	TCCR2A |= (1 << WGM20) | (1 << COM2B1);
 	TCCR2B |= (1 << CS20);
 	OCR2B = 0;
 
-	TCCR0A |= (1 << WGM00) | (1 << WGM01) | (1 << COM0A1) | (1 << COM0B1);
+	TCCR0A |= (1 << WGM00) | (1 << COM0A1) | (1 << COM0B1);
 	//	Red -> OC0B
 	//	Green -> OC0A
 	TCCR0B |= (1 << CS00);

@@ -29,9 +29,9 @@ int	main ( void )
 			else if (~PIND & (1 << 4))
 			{
 				if (counter == 0)
-				counter = 15;
+					counter = 15;
 				else
-				counter--;
+					counter--;
 				PORTB = (counter << PORTB0) | ((counter >> 1) << PORTB1) | ((counter >> 2) << PORTB2) | ((counter >> 3) << PORTB4);
 				//	Prevent bounce effect
 				while (~PIND & (1 << 4));
