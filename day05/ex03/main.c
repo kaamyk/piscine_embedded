@@ -1,7 +1,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-#define	BASE "0123456789abcdef"
+#define	BASE "0123456789"
 
 void	init_uart( void )
 {
@@ -28,23 +28,56 @@ void	uart_tx( char c )
 	UDR0 = c;
 }
 
+void	uart_printstr( const char * str )
+{
+	while (*str)
+	{
+		uart_tx(*str);
+		str++;
+	}
+}
+
 void	setup_pv1( void )
 {
 	//	Select the ADC0
 	// ADMUX &= 0b0000;
-	//	Select the voltage | Left adjust result
-	ADMUX |= (1 << REFS0) | (1 << ADLAR);
+	//	Select the voltage 
+	ADMUX |= (1 << REFS0) | (1 << REFS1);
 	
 	//	Enable ADC | divider = 128
 	ADCSRA |= (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
 }
 
+void	select_channel( void )
+{
+	ADMUX &= ~(3 << MUX0);
+	ADMUX |= (1 << MUX3);
+}
+void	ft_itoa( uint16_t val )
+{
+	if (val >= 10)
+		ft_itoa(val / 10);
+	uart_tx((val % 10) + '0');
+}
+
+uint16_t	convert( uint16_t value )
+{
+	// Use of linear function
+	// 0x160 = 352 | 0x010d = 269
+	//	slope = 0.783
+	float	slope = (25 - (-40)) / (0x0160 - 0x010d);
+	//	intercept = -250.616
+	float	intercept = 25 - (slope * 0x0160);
+	return ((slope * value) + intercept);
+}
+
 int		main ( void )
 {
-	uint8_t	value = 0;
+	uint16_t	value = 0;
 	// PV1 ==> ADC_POT / ADC0
 	init_uart();
 	setup_pv1();
+	select_channel();
 	while (1)
 	{
 		//	After each conversion the flag is set to 0
@@ -52,13 +85,10 @@ int		main ( void )
 		ADCSRA |= (1 << ADSC);
 		//	Wait for the conversion to be done
 		while (ADCSRA & (1 << ADSC));
-		value = ADCH;
-		//	Print first digit
-		uart_tx(BASE[(value >> 4) % 16]);
-		//	Print second digit
-		uart_tx(BASE[value % 16]);
-		uart_tx('\n');
-		uart_tx('\r');
+		value = ADC;
+		//
+		ft_itoa(convert(value));
 		_delay_ms(20);
+		uart_printstr("\r\n");
 	}
 }

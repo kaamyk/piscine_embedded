@@ -28,6 +28,15 @@ void	uart_tx( char c )
 	UDR0 = c;
 }
 
+void	uart_printstr( const char * str )
+{
+	while (*str)
+	{
+		uart_tx(*str);
+		str++;
+	}
+}
+
 void	setup_pv1( void )
 {
 	//	Select the ADC0
@@ -39,14 +48,22 @@ void	setup_pv1( void )
 	ADCSRA |= (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
 }
 
+void	select_channel( uint8_t channel )
+{
+	ADMUX &= ~(3 << MUX0);
+	ADMUX |= (channel << MUX0);
+}
+
 int		main ( void )
 {
 	uint8_t	value = 0;
+	uint8_t	channel = 0;
 	// PV1 ==> ADC_POT / ADC0
 	init_uart();
 	setup_pv1();
 	while (1)
 	{
+		select_channel(channel);
 		//	After each conversion the flag is set to 0
 		//	Set the ADSC bit in ADCSRA
 		ADCSRA |= (1 << ADSC);
@@ -55,8 +72,9 @@ int		main ( void )
 		value = ADCH;
 		uart_tx(BASE[(value >> 4) % 16]);
 		uart_tx(BASE[value % 16]);
-		uart_tx('\n');
-		uart_tx('\r');
-		_delay_ms(20);
+		channel == 2 ? uart_printstr("\r\n") : uart_printstr(", ");
+		if (channel == 2)
+			_delay_ms(20);
+		channel = (channel + 1) % 3;
 	}
 }

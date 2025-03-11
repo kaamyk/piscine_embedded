@@ -1,7 +1,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-#define	BASE "0123456789abcdef"
+#define	BASE "0123456789"
 
 void	init_uart( void )
 {
@@ -28,37 +28,61 @@ void	uart_tx( char c )
 	UDR0 = c;
 }
 
+void	uart_printstr( const char * str )
+{
+	while (*str)
+	{
+		uart_tx(*str);
+		str++;
+	}
+}
+
 void	setup_pv1( void )
 {
 	//	Select the ADC0
 	// ADMUX &= 0b0000;
-	//	Select the voltage | Left adjust result
-	ADMUX |= (1 << REFS0) | (1 << ADLAR);
+	//	Select the voltage 
+	ADMUX |= (1 << REFS0);
 	
 	//	Enable ADC | divider = 128
 	ADCSRA |= (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
 }
 
+void	select_channel( uint8_t channel )
+{
+	ADMUX &= ~(3 << MUX0);
+	//	channel == 0b000 || 0b001 || 0b010
+	ADMUX |= (channel << MUX0);
+}
+
+void	ft_itoa( uint16_t val )
+{
+	if (val >= 10)
+		ft_itoa(val / 10);
+	uart_tx((val % 10) + '0');
+}
+
 int		main ( void )
 {
-	uint8_t	value = 0;
+	uint16_t	value = 0;
+	uint8_t		channel = 0;
 	// PV1 ==> ADC_POT / ADC0
 	init_uart();
 	setup_pv1();
 	while (1)
 	{
+		select_channel(channel);
 		//	After each conversion the flag is set to 0
 		//	Set the ADSC bit in ADCSRA
 		ADCSRA |= (1 << ADSC);
 		//	Wait for the conversion to be done
 		while (ADCSRA & (1 << ADSC));
-		value = ADCH;
-		//	Print first digit
-		uart_tx(BASE[(value >> 4) % 16]);
-		//	Print second digit
-		uart_tx(BASE[value % 16]);
-		uart_tx('\n');
-		uart_tx('\r');
-		_delay_ms(20);
+		//	uin16_t can contain 10bits
+		value = ADC;
+		ft_itoa(value);
+		channel == 2 ? uart_printstr("\r\n") : uart_printstr(", ");
+		if (channel == 2)
+			_delay_ms(20);
+		channel = (channel + 1) % 3;
 	}
 }
