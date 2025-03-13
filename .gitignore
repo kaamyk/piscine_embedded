@@ -5,3 +5,4 @@ avrdude-doc-6.1.pdf
 **/.obj
 **/.vscode
 **/.zed
+.clang-format

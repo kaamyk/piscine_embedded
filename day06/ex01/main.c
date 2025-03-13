@@ -1,77 +1,63 @@
-#include "i2c.h"
 #include "uart.h"
+#include "i2c.h"
 
-#define SLA 0x38
-#define PWBR 0x48
-
-void i2c_init( void )
+void	AHT20_init(void)
 {
-	//	SCL = 100k
-	//	SCL = CPUf / (16+2(TWBR)*(PrescValue))
-	//	<=> PWBR = ((CPUf/SCL)-16)/2
-	//	<=> PWBR = 72 (0x48)
-	TWBR = PWBR;
-	//	TWI enable
-	TWCR |= (1 << TWEN);
-}
-
-void i2c_start( void )
-{
-	uart_tx('\b');
-	uart_tx('\r');
-
-	TWCR |= (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);	//	interrupt flag | Start (master) | TWI enable
-	while (!(TWCR & (1 << TWINT)));						// Wait for start to be transmitted
-	uart_putnbr_hex(TWSR);
-	uart_printstr(", ");
-
+	i2c_start();
 	i2c_write(SLA << 1);
-	while (!(TWCR & (1 << TWINT)));						//	while (ack not received)
-	uart_putnbr_hex(TWSR);
-	uart_nl();
+	i2c_write(0xBE);
+	i2c_stop();
+	_delay_ms(10);
 }
 
-void i2c_stop( void )
+void	AHT20_request_data(void)
 {
-	//	interupt flag | Stop | TWI enable
-	TWCR |= (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
-	while (TWCR & (1 << TWSTO));
+	i2c_start();
+	i2c_write(SLA << 1);
+	i2c_write(0xAC);
+	i2c_write(0x33);
+	i2c_write(0x00);
+	i2c_stop();
+	_delay_ms(80);
 }
 
-void	i2c_read( void )
+void	AHT20_read_data( void )
 {
-	uart_putnbr_hex(TWDR);
-	TWCR |= (1 << TWINT) | (1 << TWEN) | (1 << TWEA);
-	while (!(TWCR & (1 << TWINT)));
-}
-
-void	i2c_write( unsigned char data )
-{
-	TWDR = data;
-	uart_putnbr_hex(TWDR);
-	TWCR = (1 << TWINT) | (1 << TWEN);
-	while (!(TWCR & (1 << TWINT)));		//	Wait for SLA+W sent and ACK received
-}
-
-void	print_hex_value( char c )
-{
-	for (uint8_t i = 0; i < 7; i++)
+	uint8_t	status = 0;
+	
+	i2c_start();
+	//	SLA + R
+	i2c_write((SLA << 1) | 1);
+	do {
+		i2c_read_ack();
+		uart_tx(' ');
+		status = TWDR;
+		if (status & 0x80)
+		{
+			i2c_stop();
+			_delay_ms(10);
+			i2c_start();
+			i2c_write((SLA << 1) | 1);
+		}
+	}while (status & 0x80);
+	for (uint8_t i = 0; i < 5; i++)
 	{
-		i2c_read();
+		i2c_read_ack();
 		uart_tx(' ');
 	}
-	uart_nl();
+	i2c_read_nack();
+	i2c_stop();
 }
 
 int main(void)
 {
-	//debug
-	DDRB |= (1 << DDB0) | (1 << DDB1);
-	i2c_init();
 	init_uart();
+	i2c_init();
+	AHT20_init();
 	while (1)
 	{
-		i2c_start();
-		i2c_stop();
+		AHT20_request_data();
+		AHT20_read_data();
+		_delay_ms(200);
 	}
 }
