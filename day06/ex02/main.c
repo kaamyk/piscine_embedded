@@ -62,9 +62,9 @@ void	AHT20_read_data( uint8_t raw_data[7] )
 		i2c_write(0x71);
 		i2c_start();
 		i2c_write((SLA << 1) | 1);
-		i2c_read_ack();
+		i2c_read();
 		status = TWDR;
-		if (status & 0x08)
+		if (status ^ (1 << 3))
 		{
 			i2c_write((SLA << 1) | 0);
 			i2c_write(0xbe);
@@ -79,10 +79,10 @@ void	AHT20_read_data( uint8_t raw_data[7] )
 	i2c_write((SLA << 1) | 1);
 	for (uint8_t i = 0; i < 6; i++)
 	{
-		i2c_read_ack();
+		i2c_read();
 		raw_data[i] = TWDR;
 	}
-	i2c_read_nack();
+	i2c_read();
 	raw_data[6] = TWDR;
 	i2c_stop();
 }

@@ -29,7 +29,7 @@ void	AHT20_read_data( void )
 	//	SLA + R
 	i2c_write((SLA << 1) | 1);
 	do {
-		i2c_read_ack();
+		i2c_read();
 		uart_tx(' ');
 		status = TWDR;
 		if (status & 0x80)
@@ -40,12 +40,13 @@ void	AHT20_read_data( void )
 			i2c_write((SLA << 1) | 1);
 		}
 	}while (status & 0x80);
-	for (uint8_t i = 0; i < 5; i++)
+	for (uint8_t i = 0; i < 6; i++)
 	{
-		i2c_read_ack();
+		i2c_read();
 		uart_tx(' ');
 	}
-	i2c_read_nack();
+	uart_tx('\b');
+	uart_nl();
 	i2c_stop();
 }
 
@@ -58,6 +59,6 @@ int main(void)
 	{
 		AHT20_request_data();
 		AHT20_read_data();
-		_delay_ms(200);
+		_delay_ms(500);
 	}
 }

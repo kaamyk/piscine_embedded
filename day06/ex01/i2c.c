@@ -24,19 +24,11 @@ void i2c_stop(void)
 	TWCR |= (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
 }
 
-void i2c_read_ack(void)
+void i2c_read(void)
 {
 	TWCR |= (1 << TWINT) | (1 << TWEN) | (1 << TWEA);
 	while (!(TWCR & (1 << TWINT)));
 	print_hex_value(TWDR);
-}
-
-void i2c_read_nack(void)
-{
-	TWCR |= (1 << TWINT) | (1 << TWEN);
-	while (!(TWCR & (1 << TWINT)));
-	print_hex_value(TWDR);
-	uart_nl();
 }
 
 void i2c_write(unsigned char data)
