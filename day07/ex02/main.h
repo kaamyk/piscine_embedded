@@ -8,6 +8,7 @@
 #include <avr/io.h>
 #include <avr/eeprom.h>
 #include <string.h>
+// #include <strings.h>
 
 enum
 {

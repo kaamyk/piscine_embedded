@@ -18,7 +18,7 @@ void eeprom_write(const uint16_t addr, const uint8_t byte)
 	EECR |= (1 << EEPE);
 }
 
-void	eeprom_writestr( const uint16_t addr, const uint8_t *str )
+void eeprom_writestr(const uint16_t addr, const uint8_t *str)
 {
 	for (uint8_t i = 0; str[i] != 0; i++)
 	{
@@ -47,7 +47,8 @@ void eeprom_read_range(const uint16_t start, const uint16_t range)
 	char	c_data[17] = {0};
 	int16_t real_start = start - (start % 16);
 
-	for (uint16_t i = 0; real_start + i <= 0x03ff && real_start + i <= range; i++)
+	for (uint16_t i = 0; real_start + i <= 0x03ff && real_start + i <= range;
+		 i++)
 	{
 		if (i % 16 == 0)
 			print_addr(real_start + i);
@@ -60,4 +61,91 @@ void eeprom_read_range(const uint16_t start, const uint16_t range)
 			print_ascii(c_data);
 	}
 	uart_nl();
+}
+
+uint8_t find_free_space(const uint8_t key_l, const uint8_t val_l)
+{
+	uint8_t	 free_l		  = 0;
+	uint16_t total_l	  = key_l + val_l + 2;
+	uint16_t addr_counter = 0;
+	uint16_t w_addr		  = 0;
+
+	while (addr_counter <= 0x03ff)
+	{
+		if (free_l == total_l)
+		{
+			break;
+		}
+		else if (eeprom_read(addr_counter) == START_BYTE)
+		{
+			free_l = 0;
+			while (addr_counter < 0x03ff &&
+				   eeprom_read(addr_counter++) != STOP_BYTE);
+			w_addr = addr_counter;
+		}
+		else
+		{
+			++addr_counter;
+			++free_l;
+		}
+	}
+	return (free_l >= total_l ? w_addr : 0);
+}
+
+void print_key(uint16_t addr)
+{
+	uint8_t c = 0;
+
+	while (addr <= 0x3ff && c != MID_BYTE)
+	{
+		c = eeprom_read(addr++);
+		uart_tx(c);
+	}
+}
+
+void print_value(uint16_t addr)
+{
+	uint8_t c = 0;
+
+	while (addr <= 0x3ff && c != STOP_BYTE)
+	{
+		c = eeprom_read(addr++);
+		uart_tx(c);
+	}
+}
+
+uint16_t find_next_key(uint16_t addr)
+{
+	while (addr <= 0x03fc && eeprom_read(addr++) != START_BYTE);
+	return (addr);
+}
+
+uint16_t find_next_value(uint16_t addr)
+{
+	while (addr <= 0x03fd && eeprom_read(addr++) != MID_BYTE);
+	return (addr);
+}
+
+uint16_t find_key(const uint8_t *key)
+{
+	uint16_t key_addr			  = 0;
+	uint16_t addr_counter		  = 0;
+	uint8_t	 buf[MAX_KEY_LEN + 1] = {0};
+	uint8_t c = 0;
+
+	do
+	{
+		addr_counter = find_next_key(addr_counter);
+		key_addr = addr_counter;
+		for (uint8_t i = 0; addr_counter <= 0x03fd && i < MAX_KEY_LEN; i++)
+		{
+			c = eeprom_read(addr_counter++);
+			if (key[i] != c && c != MID_BYTE)
+				break ;
+			else if (c == MID_BYTE)
+				return (key_addr);
+		}
+		key_addr = 0xffff;
+	} while (addr_counter <= 0x03fc);
+	return (key_addr);
 }
