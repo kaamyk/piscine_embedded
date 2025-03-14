@@ -1,11 +1,15 @@
 #include "main.h"
 
-uint8_t input_done = 0;
+#define RED "\e[31m"
+#define RESET "\e[0m"
+
+uint8_t	 input_done = 0;
+uint16_t w_addr		= 0;
 
 uint8_t eeprom_read(const uint16_t addr)
 {
 	while (EECR & (1 << EEPE));
-	EEAR = addr & 0x1ff;
+	EEAR = addr & 0x3ff;
 	EECR |= (1 << EERE);
 	return (EEDR);
 }
@@ -27,10 +31,12 @@ void print_addr(const uint16_t addr)
 	uart_tx(' ');
 }
 
-void eeprom_read_range(const uint16_t start, const uint16_t range)
+void eeprom_read_range(const uint16_t start, uint16_t range)
 {
 	uint8_t data = 0;
 
+	// if (w_addr < 0x1f0)
+	// 	range = 0x1ef;
 	for (uint16_t i = start; i <= 0x03ff && i <= range; i++)
 	{
 		if ((start + i) % 16 == 0)
@@ -41,14 +47,18 @@ void eeprom_read_range(const uint16_t start, const uint16_t range)
 		else if (((start + i) % 2) == 0)
 			uart_tx(' ');
 		data = eeprom_read(start + i);
+		if ((start + i == w_addr))
+			uart_printstr(RED);
 		print_hex_value_8(data);
+		if ((start + i == w_addr))
+			uart_printstr(RESET);
 	}
 	uart_nl();
 }
 
-uint8_t	is_hexa(const char c)
+uint8_t is_hexa(const char c)
 {
-	return ((c >='a' && c <='f') || (c >='0' && c <= '9'));
+	return ((c >= 'a' && c <= 'f') || (c >= '0' && c <= '9'));
 }
 
 uint16_t atos_base(const uint8_t *s)
@@ -90,7 +100,7 @@ uint16_t get_addr(const char input[256])
 		uart_printstr("Address: Wrong format\r\n");
 		return (0xffff);
 	}
-	
+
 	return (atos_base(s_tmp));
 }
 
@@ -108,8 +118,8 @@ uint8_t handle_input(const char input[256], uint16_t *w_addr, uint8_t *w_byte)
 		return (1);
 	}
 	while (input[i++] != ' ');
-	if (input[i] == 0 || is_hexa(input[i]) == 0 
-		|| input[i + 1] == 0 || is_hexa(input[i + 1]) == 0)
+	if (input[i] == 0 || is_hexa(input[i]) == 0 || input[i + 1] == 0 ||
+		is_hexa(input[i + 1]) == 0)
 	{
 		uart_printstr("Byte: wrong format or empty\r\n");
 		return (1);
@@ -152,11 +162,17 @@ void get_input(char input[256])
 	}
 }
 
+uint8_t check_key_exists(const char w_addr, const uint8_t w_byte)
+{
+	const uint8_t c = eeprom_read(w_addr);
+	return (c == w_byte);
+}
+
 int main(void)
 {
-	char	 input[256] = {0};
-	uint16_t w_addr		= 0;
-	uint8_t	 w_byte		= 0;
+	char	input[256] = {0};
+	// uint8_t key_exists = 0;
+	uint8_t w_byte	   = 0;
 
 	init_uart();
 	while (1)
@@ -165,12 +181,19 @@ int main(void)
 		if (input_done == 1)
 		{
 			input_done = 0;
-			w_addr = 0;
-			w_byte = 0;
+			w_addr	   = 0;
+			w_byte	   = 0;
 			if (handle_input(input, &w_addr, &w_byte) == 0)
 			{
-				eeprom_write(w_addr, w_byte);
-				eeprom_read_range(0x00, 0x03ff);
+				if (check_key_exists(w_addr, w_byte) == 0)
+				{
+					eeprom_write(w_addr, w_byte);
+					eeprom_read_range(0x00, 0x03ff);
+				}
+				else
+				{
+					uart_printstr("Value already exists\r\n");
+				}
 			}
 		}
 	}

@@ -3,7 +3,7 @@
 uint8_t	eeprom_read( const uint16_t addr )
 {
 	while (EECR & (1 << EEPE));
-	EEAR = addr & 0x1ff;
+	EEAR = addr & 0x3ff;
 	EECR |= (1 << EERE);
 	return (EEDR);
 }
