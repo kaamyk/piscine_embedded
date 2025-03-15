@@ -12,7 +12,7 @@ void eeprom_write(const uint16_t addr, const uint8_t byte)
 {
 	while (EECR & (1 << EEPE));
 	while (SPMCSR & (1 << SELFPRGEN));
-	EEAR = addr & 0x1ff;
+	EEAR = addr & 0x3ff;
 	EEDR = byte;
 	EECR |= (1 << EEMPE);
 	EECR |= (1 << EEPE);

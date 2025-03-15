@@ -21,14 +21,14 @@ void	eeprom_read_range( const uint16_t start, const uint16_t range )
 	
 	for (uint16_t i = start; i < 0x03f0 && i < range; i++)
 	{
-		if ((start + i) % 16 == 0)
+		if (i % 16 == 0)
 		{
 			uart_nl();
 			print_addr(start + i);
 		}
-		else if (((start + i) % 2) == 0) 
+		else if (i % 2 == 0) 
 			uart_tx(' ');
-		data = eeprom_read(start + i);
+		data = eeprom_read(i);
 		print_hex_value_8(data);
 	}
 	uart_nl();
