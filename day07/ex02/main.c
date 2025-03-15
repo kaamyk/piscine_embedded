@@ -102,6 +102,7 @@ uint8_t get_val(const char **input, uint8_t val[17])
 {
 	uint8_t i = 0;
 
+	while (**input != ' ') (*input)++;
 	(*input)++;
 	for (; i < 16 && **input != '\0' && **input != ' '; i++)
 	{
