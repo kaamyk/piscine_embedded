@@ -19,64 +19,35 @@ uint8_t define_cmd(const uint8_t cmd[7])
 void read_value(const uint8_t *key)
 {
 	uint16_t addr_counter = 0;
-	// uint16_t r_addr		  = 0;
-	// uint8_t	 c			  = 0;
-	// uint8_t	 i			  = 0;
 
 	addr_counter = find_key(key);
 	if (addr_counter == 0xffff)
-		uart_printstr("empty\r\n");
+		uart_printstr("empty");
 	addr_counter = find_next_value(addr_counter);
 	print_value(addr_counter);
 }
 
 int8_t check_value_exists(const uint8_t *key)
 {
-	// uint8_t	 c			  = 0;
-	// uint8_t	 tmp_str[35]  = {0};
 	uint16_t addr_counter = 0;
 
 	addr_counter = find_key(key);
 	if (addr_counter == 0xffff)
-		return (0);
-	// while (addr_counter < 0x03ff)
-	// {
-	// 	c = eeprom_read(addr_counter++);
-	// 	if (c == 0x80)
-	// 	{
-	// 		for (uint8_t i = 0; i < 34 && tmp_str[i] != '\0'; i++)
-	// 		{
-	// 			tmp_str[i] = eeprom_read(addr_counter++);
-	// 			if (tmp_str[i] == MID_BYTE)
-	// 			{
-	// 				tmp_str[i] = '\0';
-	// 				break;
-	// 			}
-	// 		}
-	// 		if (ft_strcmp(tmp_str, key) == 0)
-	// 		{
-	// 			uart_printstr("Key: already exists\n\r");
-	// 			return (1);
-	// 		}
-	// 	}
-	// }
+		return (1);
 	return (0);
 }
 
 void write_key_value(const uint8_t key[17], const uint8_t val[17])
 {
-	uart_printstr("write << \r\n");
 	uint8_t	 key_l	= ft_strlen(key);
 	uint8_t	 val_l	= ft_strlen(val);
 	uint16_t w_addr = find_free_space(key_l, val_l);
-
-	if (w_addr == 0)
+	if (w_addr == 0xffff)
 	{
 		uart_printstr("No space found ...\r\n");
 		return;
 	}
 	uart_printstr("done\r\n");
-	// print_hex_value_16(w_addr);
 	eeprom_write(w_addr++, START_BYTE);
 	for (uint8_t i = 0; i < key_l; i++)
 	{
@@ -100,19 +71,13 @@ void forget_key_value(const uint8_t *key)
 	}
 	addr_counter--;
 	eeprom_write(addr_counter, 0x00);
-	addr_counter = find_next_value(addr_counter);
-	addr_counter--;
-	eeprom_write(addr_counter, 0x00);
-	while (addr_counter <= 0x3fd && eeprom_read(addr_counter++) != STOP_BYTE);
-	addr_counter--;
-	eeprom_write(addr_counter, 0x00);
 	uart_printstr("done\r\n");
 }
 
 uint8_t get_cmd(const char **input, uint8_t cmd[7])
 {
 	uint8_t i = 0;
-	for (; i < 6 && **input != ' '; i++)
+	for (; i < 6 && **input != '\0' && **input != ' '; i++)
 	{
 		cmd[i] = **input;
 		(*input)++;
@@ -125,7 +90,7 @@ uint8_t get_key(const char **input, uint8_t key[17])
 	uint8_t i = 0;
 
 	(*input)++;
-	for (; i < 16 && **input != ' '; i++)
+	for (; i < 16 && **input != '\0' && **input != ' '; i++)
 	{
 		key[i] = **input;
 		(*input)++;
@@ -138,13 +103,11 @@ uint8_t get_val(const char **input, uint8_t val[17])
 	uint8_t i = 0;
 
 	(*input)++;
-	for (; i < 16 && **input != ' '; i++)
+	for (; i < 16 && **input != '\0' && **input != ' '; i++)
 	{
 		val[i] = **input;
 		(*input)++;
 	}
-	uart_printstr((char *)val);
-	uart_nl();
 	return (**input != '\0');
 }
 
@@ -163,7 +126,9 @@ uint8_t handle_input(const char input[256], uint16_t *w_addr, uint8_t *w_byte)
 	uint8_t key[17] = {0};
 	uint8_t val[17] = {0};
 
-	//	get cmd
+	ft_bzero(cmd);
+	ft_bzero(key);
+	ft_bzero(val);
 	if (split_input(input, cmd, key, val) == 1)
 		return (1);
 	switch (define_cmd(cmd))
@@ -179,16 +144,18 @@ uint8_t handle_input(const char input[256], uint16_t *w_addr, uint8_t *w_byte)
 	case WRITE:
 		if (key[0] == '\0')
 		{
-			uart_printstr("Key: Wrong format\r\n");
+			uart_printstr("Key: empty\r\n");
 			return (1);
 		}
 		if (val[0] == '\0')
 		{
-			uart_printstr("Value: Wrong format\r\n");
+			uart_printstr("Value: empty\r\n");
 			return (1);
 		}
-		if (check_value_exists(key) == 0)
+		if (check_value_exists(key) == 1)
 			write_key_value(key, val);
+		else
+			uart_printstr("Key already exists\r\n");
 		break;
 	case FORGET:
 		forget_key_value(key);
@@ -200,9 +167,6 @@ uint8_t handle_input(const char input[256], uint16_t *w_addr, uint8_t *w_byte)
 		uart_printstr("Command: invalid command\n\r");
 		return (1);
 	}
-	bzero(cmd, 7);
-	bzero(key, 17);
-	bzero(val, 17);
 	return (0);
 }
 
@@ -211,6 +175,7 @@ void get_input(char input[256])
 	uint8_t input_counter = 0;
 	char	c			  = 0;
 
+	uart_printstr("super_eeprom> ");
 	while (input_done == 0)
 	{
 		while (c == 0) c = uart_rx();
@@ -237,6 +202,7 @@ void get_input(char input[256])
 		}
 		c = 0;
 	}
+	input[input_counter] = 0;
 }
 
 int main(void)
@@ -248,6 +214,7 @@ int main(void)
 	init_uart();
 	while (1)
 	{
+		ft_bzero((uint8_t *)input);
 		get_input(input);
 		if (input_done == 1)
 		{

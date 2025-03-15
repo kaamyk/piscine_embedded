@@ -20,8 +20,9 @@ void	 print_addr(const uint16_t addr);
 void	 eeprom_read_range(const uint16_t start, const uint16_t range);
 void	 print_key(uint16_t addr);
 void	 print_value(uint16_t addr);
-uint8_t find_free_space(const uint8_t key_l, const uint8_t val_l);
+uint16_t find_free_space(const uint8_t key_l, const uint8_t val_l);
 uint16_t find_next_value(uint16_t addr);
 uint16_t find_next_key(uint16_t addr);
+uint16_t find_next_stop(uint16_t addr);
 uint16_t find_key(const uint8_t *key);
 #endif

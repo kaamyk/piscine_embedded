@@ -63,25 +63,24 @@ void eeprom_read_range(const uint16_t start, const uint16_t range)
 	uart_nl();
 }
 
-uint8_t find_free_space(const uint8_t key_l, const uint8_t val_l)
+uint16_t find_free_space(const uint8_t key_l, const uint8_t val_l)
 {
 	uint8_t	 free_l		  = 0;
 	uint16_t total_l	  = key_l + val_l + 2;
 	uint16_t addr_counter = 0;
 	uint16_t w_addr		  = 0;
 
-	while (addr_counter <= 0x03ff)
+	while (addr_counter <= 0x03ff && free_l <= total_l)
 	{
 		if (free_l == total_l)
 		{
-			break;
+			return (w_addr);
 		}
 		else if (eeprom_read(addr_counter) == START_BYTE)
 		{
 			free_l = 0;
-			while (addr_counter < 0x03ff &&
-				   eeprom_read(addr_counter++) != STOP_BYTE);
-			w_addr = addr_counter;
+			addr_counter = find_next_stop(addr_counter);
+			w_addr = ++addr_counter;
 		}
 		else
 		{
@@ -89,7 +88,13 @@ uint8_t find_free_space(const uint8_t key_l, const uint8_t val_l)
 			++free_l;
 		}
 	}
-	return (free_l >= total_l ? w_addr : 0);
+	uart_printstr("Total_l == ");
+	print_hex_value_16(total_l);
+	uart_nl();
+	uart_printstr("w_addr == ");
+	print_hex_value_16(w_addr);
+	uart_nl();
+	return (0xffff);
 }
 
 void print_key(uint16_t addr)
@@ -98,20 +103,22 @@ void print_key(uint16_t addr)
 
 	while (addr <= 0x3ff && c != MID_BYTE)
 	{
+		if (c != 0) uart_tx(c);
 		c = eeprom_read(addr++);
-		uart_tx(c);
 	}
+	uart_nl();
 }
 
 void print_value(uint16_t addr)
 {
 	uint8_t c = 0;
-
+	
 	while (addr <= 0x3ff && c != STOP_BYTE)
 	{
+		if (c != 0) uart_tx(c);
 		c = eeprom_read(addr++);
-		uart_tx(c);
 	}
+	uart_nl();
 }
 
 uint16_t find_next_key(uint16_t addr)
@@ -126,11 +133,16 @@ uint16_t find_next_value(uint16_t addr)
 	return (addr);
 }
 
+uint16_t find_next_stop(uint16_t addr)
+{
+	while (addr <= 0x03fd && eeprom_read(addr) != STOP_BYTE) ++addr;
+	return (addr);
+}
+
 uint16_t find_key(const uint8_t *key)
 {
 	uint16_t key_addr			  = 0;
 	uint16_t addr_counter		  = 0;
-	uint8_t	 buf[MAX_KEY_LEN + 1] = {0};
 	uint8_t c = 0;
 
 	do

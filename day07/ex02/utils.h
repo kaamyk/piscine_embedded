@@ -10,7 +10,8 @@ uint8_t	 is_hexa(const char c);
 uint8_t	 is_printable(const char c);
 uint16_t atos_base(const uint8_t *s);
 uint8_t	 atob_base(const char *s);
-int	ft_strlen(const uint8_t *s);
-int ft_strcmp(const uint8_t *s, const uint8_t *s1);
+int		 ft_strlen(const uint8_t *s);
+int		 ft_strcmp(const uint8_t *s, const uint8_t *s1);
+void	 ft_bzero(uint8_t *str);
 
 #endif

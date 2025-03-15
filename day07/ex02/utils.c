@@ -5,10 +5,7 @@ uint8_t is_hexa(const char c)
 	return ((c >= 'a' && c <= 'f') || (c >= '0' && c <= '9'));
 }
 
-uint8_t	is_printable(const char c)
-{
-	return (c > 32 && c < 127);
-}
+uint8_t is_printable(const char c) { return (c > 32 && c < 127); }
 
 uint16_t atos_base(const uint8_t *s)
 {
@@ -34,11 +31,10 @@ uint8_t atob_base(const char *s)
 	return (((first_digit & 0x0F) << 4) | (second_digit & 0x0F));
 }
 
-int	ft_strlen(const uint8_t *s)
+int ft_strlen(const uint8_t *s)
 {
 	const uint8_t *tmp = s;
-	while (*tmp)
-		tmp++;
+	while (*tmp) tmp++;
 	return (tmp - s);
 }
 
@@ -52,4 +48,12 @@ int ft_strcmp(const uint8_t *s, const uint8_t *s1)
 		s1++;
 	}
 	return (0);
+}
+
+void ft_bzero(uint8_t *str)
+{
+	while (*str)
+	{
+		*(str++) = 0;
+	}
 }
