@@ -50,7 +50,7 @@ char	uart_rx( void )
 	return (UDR0);
 }
 
-void	uart_printstr( const char * str )
+void	uart_printstr( const uint8_t * str )
 {
 	while (*str)
 	{

@@ -1,8 +1,6 @@
 #ifndef I2C_H
 #define I2C_H
 
-#include "uart.h"
-
 #include <avr/io.h>
 #include <util/delay.h>
 
@@ -17,6 +15,6 @@ void i2c_stop(void);
 void i2c_read(void);
 void i2c_read_ack(void);
 void i2c_read_nack(void);
-void i2c_write(unsigned char data);
+void i2c_write(uint8_t data);
 
 #endif
