@@ -38,7 +38,7 @@ void ui8todisplay(const uint8_t digit_selector, const uint8_t n)
 		pca9555_write(OP1, tab[n % 10]);
 	else
 		pca9555_write(OP1, tab[n]);
-	_delay_ms(4);
+	_delay_ms(2);
 	pca9555_write(OP1, 0x00);
 }
 
@@ -67,9 +67,9 @@ uint8_t check_latest(const uint16_t *latest)
 	return (latest[0] != latest[1] || latest[1] != latest[2] || latest[2] != latest[3]);
 }
 
+/*	--- display is fast but between two values it fliggers ---	*/
 int main(void)
 {
-	uint16_t latest[4] = {0};
 	uint16_t counter   = 0;
 
 	i2c_init();
@@ -81,11 +81,30 @@ int main(void)
 		ui8todisplay(1, (counter / 10) % 10);
 		ui8todisplay(2, (counter / 100) % 10);
 		ui8todisplay(3, (counter / 1000) % 10);
-		latest[0] = latest[1];
-		latest[1] = latest[2];
-		latest[2] = latest[3];
-		latest[3] = read_rv1();
-		if (check_latest(latest) == 1)
-			counter = latest[3];
+		counter = read_rv1();
 	}
 }
+
+/*	--- Display changes only when RV1 stabilized but no fliggering ---	*/
+// int main(void)
+// {
+// 	uint16_t latest[4] = {0};
+// 	uint16_t counter   = 0;
+
+// 	i2c_init();
+// 	setup_pv1();
+
+// 	while (1)
+// 	{
+// 		ui8todisplay(0, counter % 10);
+// 		ui8todisplay(1, (counter / 10) % 10);
+// 		ui8todisplay(2, (counter / 100) % 10);
+// 		ui8todisplay(3, (counter / 1000) % 10);
+// 		latest[0] = latest[1];
+// 		latest[1] = latest[2];
+// 		latest[2] = latest[3];
+// 		latest[3] = read_rv1();
+// 		if (latest[0] == latest[1] && latest[1] == latest[2] && latest[2] == latest[3])
+// 			counter = latest[3];
+// 	}
+// }

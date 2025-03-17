@@ -38,7 +38,7 @@ void ui8todisplay(const uint8_t digit_selector, const uint8_t n)
 		pca9555_write(OP1, tab[n % 10]);
 	else
 		pca9555_write(OP1, tab[n]);
-	_delay_ms(5);
+	_delay_ms(2);
 	pca9555_write(OP1, 0x00);
 }
 
@@ -55,7 +55,7 @@ int main(void)
 		ui8todisplay(1, (counter / 10) % 10);
 		ui8todisplay(2, (counter / 100) % 10);
 		ui8todisplay(3, (counter / 1000) % 10);
-		if (timer_counter >= 37)
+		if (timer_counter >= 71)
 		{
 			counter		  = (counter + 1) % 10000;
 			timer_counter = 0;
